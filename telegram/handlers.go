@@ -15,7 +15,6 @@ import (
 )
 
 func (b *Bot) handleGreeting(update *tgbot.Update) {
-
 	const greetingFormat = `Привет %s! 
 
 	Этот бот умеет работать только с ссылками. 

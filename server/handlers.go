@@ -7,7 +7,7 @@ import (
 
 func (s *Server) handler(w http.ResponseWriter, r *http.Request) {
 	p := r.URL.Path[1:]
-	if "" == p || len(p) != 5 {
+	if p == "" || len(p) != 5 {
 		notFound(w, r)
 		return
 	}
@@ -17,7 +17,7 @@ func (s *Server) handler(w http.ResponseWriter, r *http.Request) {
 		notFound(w, r)
 		return
 	}
-	http.Redirect(w, r, su.OriginURL, 302)
+	http.Redirect(w, r, su.OriginURL, http.StatusFound)
 }
 
 func notFound(w http.ResponseWriter, r *http.Request) {

@@ -9,8 +9,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var ctx = context.TODO()
-
 func Open(url string) *mongo.Client {
 	cmdMonitor := &event.CommandMonitor{
 		Started: func(_ context.Context, evt *event.CommandStartedEvent) {
