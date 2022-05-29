@@ -3,6 +3,7 @@ package mongo
 import (
 	"context"
 	"log"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -24,6 +25,10 @@ func (sus *ShortURLService) CreateShortURL(ctx context.Context, shortURL *domain
 	if err == nil {
 		return shortURL.ShortURL, nil
 	}
+
+	shortURL.CreatedAt = time.Now()
+	shortURL.UpdatedAt = time.Now()
+
 	_, err = sus.collection.InsertOne(ctx, shortURL)
 	if err != nil {
 		log.Print("Error while 'InsertOne' operation")
@@ -33,5 +38,7 @@ func (sus *ShortURLService) CreateShortURL(ctx context.Context, shortURL *domain
 }
 
 func (sus *ShortURLService) GetOriginUrl(ctx context.Context, shortURL string) (*domain.ShortURL, error) {
-	return &domain.ShortURL{}, nil
+	var su domain.ShortURL
+	err := sus.collection.FindOne(ctx, bson.D{{"short_url", shortURL}}).Decode(&su)
+	return &su, err
 }

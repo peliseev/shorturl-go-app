@@ -3,7 +3,7 @@ package telegram
 import (
 	"context"
 	"crypto/sha256"
-	"encoding/base64"
+	"encoding/base32"
 	"fmt"
 	"log"
 	"net"
@@ -27,7 +27,7 @@ func (b *Bot) handleGreeting(update *tgbot.Update) {
 	response(fmt.Sprintf(greetingFormat, update.Message.From.UserName), b, update)
 }
 
-func (b *Bot) handleURL(ctx context.Context, update *tgbot.Update) {
+func (b *Bot) handleURL(update *tgbot.Update) {
 	const errorMsg = `
 	Этот бот умеет работать только с ссылками. 
 	Прежде чем прислать ссылку, убедитесь в том, что:
@@ -44,6 +44,10 @@ func (b *Bot) handleURL(ctx context.Context, update *tgbot.Update) {
 	}
 
 	user := update.Message.From.UserName
+
+	ctx, cancle := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancle()
+
 	shortURL, err := b.urlService.CreateShortURL(ctx, &domain.ShortURL{
 		User:      user,
 		OriginURL: pURL,
@@ -54,7 +58,7 @@ func (b *Bot) handleURL(ctx context.Context, update *tgbot.Update) {
 		log.Print(err)
 	}
 
-	response(shortURL, b, update)
+	response(b.urlPrefix+shortURL, b, update)
 }
 
 func validateURL(pURL string) bool {
@@ -86,6 +90,6 @@ func computeShortURL(originURL, user string) string {
 	h := sha256.New()
 	h.Write([]byte(originURL + user))
 	hash := h.Sum(nil)
-	b := base64.StdEncoding.EncodeToString(hash)
+	b := base32.StdEncoding.EncodeToString(hash)
 	return b[:5]
 }

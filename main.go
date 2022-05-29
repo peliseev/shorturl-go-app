@@ -6,11 +6,12 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/peliseev/shorturl-go-app/mongo"
+	"github.com/peliseev/shorturl-go-app/server"
 	"github.com/peliseev/shorturl-go-app/telegram"
 )
 
 type config struct {
-	mongoUrl, tgAPIkey string
+	port, mongoUrl, tgAPIkey, urlPrefix string
 }
 
 func init() {
@@ -23,8 +24,11 @@ func init() {
 func main() {
 	cfg := envConfig()
 	db := mongo.Open(cfg.mongoUrl)
-	bot := telegram.NewBot(cfg.tgAPIkey, db)
-	bot.Run()
+	service := mongo.NewShortURLService(db)
+	bot := telegram.NewBot(cfg.urlPrefix, cfg.tgAPIkey, db, service)
+	server := server.NewServer(db, service)
+	go bot.Run()
+	log.Fatal(server.Run(cfg.port))
 }
 
 func envConfig() config {
@@ -38,5 +42,20 @@ func envConfig() config {
 		log.Fatal("TELEGRAM_BOT_API_KEY should be provided")
 	}
 
-	return config{mongoUrl: mongoUrl, tgAPIkey: tgAPIkey}
+	urlPrefix, ok := os.LookupEnv("URL_PREFIX")
+	if !ok {
+		urlPrefix = "http://localhost:8080/"
+	}
+
+	port, ok := os.LookupEnv("PORT")
+	if !ok {
+		port = ":8080"
+	}
+
+	return config{
+		mongoUrl:  mongoUrl,
+		tgAPIkey:  tgAPIkey,
+		urlPrefix: urlPrefix,
+		port:      port,
+	}
 }
