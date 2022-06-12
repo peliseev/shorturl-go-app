@@ -1,0 +1,24 @@
+version: "3.7"
+
+services:
+  app:
+    image: ghcr.io/peliseev/shorturl-go-app:latest
+    ports:
+      - 80:80
+    networks:
+      - app-network
+    volumes:
+      - $(pwd)/config/.env:/etc/.env
+
+  mongo:
+    image: mongo:5.0.8
+    volumes:
+      - ~/shorturl/mongo/mongo-data:/data/db
+    environment:
+      MONGO_INITDB_DATABASE: shorturl
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge

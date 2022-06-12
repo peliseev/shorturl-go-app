@@ -15,7 +15,7 @@ type config struct {
 }
 
 func init() {
-	err := godotenv.Load()
+	err := godotenv.Load("/etc/.env")
 	if err != nil {
 		log.Print("Error loading .env file")
 	}
