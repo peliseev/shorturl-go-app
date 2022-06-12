@@ -1,7 +1,7 @@
 # SHORTURL-GO-APP
-Simple telegram-bot and web-server implement url shorter function.
+Simple telegram-bot and server implement url shorter function.
 
-Bot available here - [t.me/MontyShorty_bot]()
+Bot available here - [t.me/MontyShorty_bot](https://t.me/MontyShorty_bot)
 
 [![CICD](https://github.com/peliseev/shorturl-go-app/actions/workflows/cicd.yaml/badge.svg?branch=master)](https://github.com/peliseev/shorturl-go-app/actions/workflows/cicd.yaml)
 
@@ -19,7 +19,7 @@ The project was created for 2 purpose:
 | `MONGO_URL`            | Connection URL to database                                                                                                                                    | `mongo://mongodb.node1.com:27017`         | `mongo://localhost:27017`                                |
 | `TELEGRAM_BOT_API_KEY` | API key need to interact with telegram Bot                                                                                                                    | `8294723453:R08gVE8gRlVDSyBZT1VSIFNFTEY=` | No default value, you should specify this one explicitly |
 | `URL_PREFIX`           | URL prefix, which bot will add to generated short URL<br/> <br/> If you specify `http://xyz.io/`, short URL will be generated like `http://xyz.io/` + `Xu6ZK` | `https://your-domain.com/`                | `http://localhost:8080/`                                 |
-| `PORT`                 | Port on which web-server will be start                                                                                                                        | `:443`                                    | `:8080`                                                  |
+| `PORT`                 | Port on which server will be start                                                                                                                            | `443`                                     | `8080`                                                   |
 
 # How to run
 
