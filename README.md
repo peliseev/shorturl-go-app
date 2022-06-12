@@ -1,34 +1,45 @@
 # SHORTURL-GO-APP
-Простой telegram-bot и web-server реализующие возможность сокращения ссылок.
+Simple telegram-bot and web-server implement url shorter function.
 
-# Цель
-Проект был создан, преследуя две цели:
-* Изучить язык Go на примере "Real World Appplication"
-* Добавить проект в резюме
+[![CICD](https://github.com/peliseev/shorturl-go-app/actions/workflows/cicd.yaml/badge.svg?branch=master)](https://github.com/peliseev/shorturl-go-app/actions/workflows/cicd.yaml)
+
+# Goal
+The project was created for 2 purpose:
+* Learn Golang with "Real World Application" example
+* Add this one to CV
 
 ## TODO
-* Реализовать CI/CD
-  * Сборка проекта
-  * Подготовить Dockerfile и docker-compose
-  * Написать pipe на базе GitHub Actions
-* Добавить функцию подсчета переходов по короткой ссылке
+* Add link follow counter
 
-# Архитектура
-![Архитектура](img/shorturl-go-app-arch.png)
+# Environment variables
+| Variable               | Description                                                                                                                                                   | Example                                   | Default value                                            |
+|------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------|----------------------------------------------------------|
+| `MONGO_URL`            | Connection URL to database                                                                                                                                    | `mongo://mongodb.node1.com:27017`         | `mongo://localhost:27017`                                |
+| `TELEGRAM_BOT_API_KEY` | API key need to interact with telegram Bot                                                                                                                    | `8294723453:R08gVE8gRlVDSyBZT1VSIFNFTEY=` | No default value, you should specify this one explicitly |
+| `URL_PREFIX`           | URL prefix, which bot will add to generated short URL<br/> <br/> If you specify `http://xyz.io/`, short URL will be generated like `http://xyz.io/` + `Xu6ZK` | `https://your-domain.com/`                | `http://localhost:8080/`                                 |
+| `PORT`                 | Port on which web-server will be start                                                                                                                        | `443`                                     | `8080`                                                   |
 
-Приложение имеет два компонента, для взаимодействия с пользователем:
-* telegram - пакет, инкапсулирующий логику подключения к Telegram API и взаимодействия с пользователем через телеграм-бота
-* server - web-server, который обрабатывает HTTP запросы от пользователя и посылает 302 Redirect, если пользователь перешел по валидной короткой ссылке
+# How to run
 
-Промежуточный компонент domain описывает бизнес сущность приложения - `ShortURL` и предоставляет два интерфейса для взаимодействия с этой сущностью:
+There's one prerequisite for running the app. You should [create Bot via Telegram BotFather](https://core.telegram.org/bots#3-how-do-i-create-a-bot) and specify `TELEGRAM_BOT_API_KEY` environment variable 
+(just create .env file with that string: `TELEGRAM_BOT_API_KEY=<YOUR_API_KEY>` in project root)
+
+After this done, run docker compose:
+
+`docker-compose pull && docker-compose up -d`
+
+That's it!
+	
+# Architecture
+
+![Architecture](img/shorturl-go-app-arch.png "Architecture")
+
+The application has two component for interacting with a user:
+* `telegram` - package encapsulate Telegram API connection logic and provide handlers for Bot chat messages
+* `server` - server serve HTTP requests from users and response 302 Redirect if request path contain valid short URL
+
+`domain` package contain central business entity `ShortURL` and provide two interfaces to interact with this entity:
 * `CreateShortURL(context.Context, *ShortURL) (string, error)`
 * `GetOriginUrl(context.Context, string) (*ShortURL, error)`
 
-DAO компонент mongo инкапсулирует в себе логику взаимодействия с базой данных MongoDB и имплементирует методы доменного интерфейса
-
-Выбирая между SQL и NoSQL решениями в качестве СУБД я руководствовался тем, что для решения задачи не нужна транзакционность, но было бы неплохо заложить фундамент для масштабирования решения. Таким образом выбор пал на NoSQL СУБД.
-MongoDB предоставляет механизмы горизонтального масштабирования из коробки, что нельзя сказать о классических SQL решениях, таких как Postgres.
-
-Если понадобиться масштабировать приложение на чтение (что более вероятно, учитывая паттерны доступа к данным) - будет достаточно развернуть несколько реплик БД с ReadOnly доступом.
-
-Если потребуется масштабировать на запись - монго справиться и с этим, т.к. у этой СУБД есть механизмы шардирование из коробки.
+DAO package `mongo` contain logic to interact with mongoDB and implement `ShortURL` interfaces.

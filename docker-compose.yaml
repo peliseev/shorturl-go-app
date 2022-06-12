@@ -2,13 +2,13 @@ version: "3.7"
 
 services:
   app:
-    image: ghcr.io/peliseev/shorturl-go-app:latest
+    image: ghcr.io/peliseev/shorturl-go-app:master
     ports:
       - 80:80
     networks:
       - app-network
     volumes:
-      - $(pwd)/config/.env:/etc/.env
+      - $(pwd)/.env:/etc/.env
 
   mongo:
     image: mongo:5.0.8
