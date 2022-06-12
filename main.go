@@ -11,7 +11,7 @@ import (
 )
 
 type config struct {
-	port, mongoUrl, tgAPIkey, urlPrefix string
+	port, mongoURL, tgAPIkey, urlPrefix string
 }
 
 func init() {
@@ -23,7 +23,7 @@ func init() {
 
 func main() {
 	cfg := envConfig()
-	db := mongo.Open(cfg.mongoUrl)
+	db := mongo.Open(cfg.mongoURL)
 	service := mongo.NewShortURLService(db)
 	bot := telegram.NewBot(cfg.urlPrefix, cfg.tgAPIkey, service)
 	srv := server.NewServer(db, service)
@@ -32,9 +32,9 @@ func main() {
 }
 
 func envConfig() config {
-	mongoUrl, ok := os.LookupEnv("MONGO_URL")
+	mongoURL, ok := os.LookupEnv("MONGO_URL")
 	if !ok {
-		mongoUrl = "mongodb://localhost:27017/"
+		mongoURL = "mongodb://localhost:27017/"
 	}
 
 	tgAPIkey, ok := os.LookupEnv("TELEGRAM_BOT_API_KEY")
@@ -53,7 +53,7 @@ func envConfig() config {
 	}
 
 	return config{
-		mongoUrl:  mongoUrl,
+		mongoURL:  mongoURL,
 		tgAPIkey:  tgAPIkey,
 		urlPrefix: urlPrefix,
 		port:      port,

@@ -5,6 +5,8 @@ import (
 	"time"
 )
 
+// ShortURL is main domain entity, which represent
+// map between shortURL and originURL
 type ShortURL struct {
 	CreatedAt time.Time `bson:"created_at"`
 	UpdatedAt time.Time `bson:"updated_at"`
@@ -13,8 +15,9 @@ type ShortURL struct {
 	OriginURL string    `bson:"origin_url"`
 }
 
+// ShortURLService interface for interact within ShortURL entity.
 type ShortURLService interface {
 	CreateShortURL(context.Context, *ShortURL) (string, error)
 
-	GetOriginUrl(context.Context, string) (*ShortURL, error)
+	GetOriginURL(context.Context, string) (*ShortURL, error)
 }

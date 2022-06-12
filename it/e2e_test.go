@@ -71,8 +71,8 @@ func TestWithMongoDB(t *testing.T) {
 	service := mongo.NewShortURLService(db)
 	testServer := server.NewServer(db, service)
 	bot := telegram.Bot{
-		UrlPrefix:  cfg.urlPrefix,
-		UrlService: service,
+		URLPrefix:  cfg.urlPrefix,
+		URLService: service,
 		Bot:        &BotAPIMock{},
 	}
 

@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/base32"
 	"fmt"
+	"golang.org/x/net/idna"
 	"log"
 	"net"
 	"net/url"
@@ -48,7 +49,7 @@ func (b *Bot) HandleURL(update *tgbot.Update) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	shortURL, err := b.UrlService.CreateShortURL(ctx, &domain.ShortURL{
+	shortURL, err := b.URLService.CreateShortURL(ctx, &domain.ShortURL{
 		User:      user,
 		OriginURL: pURL,
 		ShortURL:  computeShortURL(pURL, user),
@@ -58,7 +59,7 @@ func (b *Bot) HandleURL(update *tgbot.Update) {
 		log.Print(err)
 	}
 
-	response(b.UrlPrefix+shortURL, b, update)
+	response(b.URLPrefix+shortURL, b, update)
 }
 
 func validateURL(pURL string) bool {
@@ -67,11 +68,14 @@ func validateURL(pURL string) bool {
 		log.Print(err)
 		return false
 	}
-	_, err = net.DialTimeout("tcp", parsedURL.Host+":http", time.Duration(5)*time.Second)
+
+	// fix bug with cyrillic domains IDNA2003 https://datatracker.ietf.org/doc/html/rfc3490]
+	hostname, err := idna.ToASCII(parsedURL.Host)
+	_, err = net.DialTimeout("tcp", hostname+":http", time.Duration(2)*time.Second)
 	if err != nil {
-		_, err := net.DialTimeout("tcp", parsedURL.Host+":https", time.Duration(5)*time.Second)
+		_, err := net.DialTimeout("tcp", hostname+":https", time.Duration(2)*time.Second)
 		if err != nil {
-			log.Printf("Site %s is unreachable", pURL)
+			log.Printf("Wrong address: %q", pURL)
 			return false
 		}
 	}

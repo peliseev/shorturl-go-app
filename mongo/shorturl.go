@@ -21,7 +21,7 @@ func NewShortURLService(db *mongo.Client) *ShortURLService {
 }
 
 func (sus *ShortURLService) CreateShortURL(ctx context.Context, shortURL *domain.ShortURL) (string, error) {
-	err := sus.collection.FindOne(ctx, bson.D{{"short_url", shortURL.ShortURL}}).Decode(shortURL)
+	err := sus.collection.FindOne(ctx, bson.D{{Key: "short_url", Value: shortURL.ShortURL}}).Decode(shortURL)
 	if err == nil {
 		return shortURL.ShortURL, nil
 	}
@@ -37,8 +37,8 @@ func (sus *ShortURLService) CreateShortURL(ctx context.Context, shortURL *domain
 	return shortURL.ShortURL, nil
 }
 
-func (sus *ShortURLService) GetOriginUrl(ctx context.Context, shortURL string) (*domain.ShortURL, error) {
+func (sus *ShortURLService) GetOriginURL(ctx context.Context, shortURL string) (*domain.ShortURL, error) {
 	var su domain.ShortURL
-	err := sus.collection.FindOne(ctx, bson.D{{"short_url", shortURL}}).Decode(&su)
+	err := sus.collection.FindOne(ctx, bson.D{{Key: "short_url", Value: shortURL}}).Decode(&su)
 	return &su, err
 }

@@ -11,7 +11,7 @@ func (s *Server) handler(w http.ResponseWriter, r *http.Request) {
 		notFound(w, r)
 		return
 	}
-	su, err := s.urlService.GetOriginUrl(r.Context(), p)
+	su, err := s.urlService.GetOriginURL(r.Context(), p)
 	if err != nil {
 		log.Print(err)
 		notFound(w, r)

@@ -9,12 +9,12 @@ import (
 )
 
 type Bot struct {
-	UrlPrefix  string
-	Bot        BotApiI
-	UrlService domain.ShortURLService
+	URLPrefix  string
+	Bot        IBotAPI
+	URLService domain.ShortURLService
 }
 
-type BotApiI interface {
+type IBotAPI interface {
 	Send(c tgbot.Chattable) (tgbot.Message, error)
 	GetUpdatesChan(config tgbot.UpdateConfig) (tgbot.UpdatesChannel, error)
 }
@@ -28,9 +28,9 @@ func NewBot(urlPrefix, apiKey string, sus *mongo.ShortURLService) *Bot {
 	log.Printf("Authorized on account: %s", bot.Self.UserName)
 
 	return &Bot{
-		UrlPrefix:  urlPrefix,
+		URLPrefix:  urlPrefix,
 		Bot:        bot,
-		UrlService: sus,
+		URLService: sus,
 	}
 }
 
