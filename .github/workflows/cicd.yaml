@@ -63,7 +63,7 @@ jobs:
           touch .env
           echo URL_PREFIX=http://shortyurl.ru/                          >> .env
           echo MONGO_URL=mongodb://mongo:27017/                         >> .env
-          echo PORT=:80                                                 >> .env
+          echo PORT=80                                                  >> .env
           echo TELEGRAM_BOT_API_KEY=${{ secrets.TELEGRAM_BOT_API_KEY }} >> .env
 
       - name: Connect to VPS via SSH

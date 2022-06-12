@@ -1,6 +1,8 @@
 # SHORTURL-GO-APP
 Simple telegram-bot and web-server implement url shorter function.
 
+Bot available here - [t.me/MontyShorty_bot]()
+
 [![CICD](https://github.com/peliseev/shorturl-go-app/actions/workflows/cicd.yaml/badge.svg?branch=master)](https://github.com/peliseev/shorturl-go-app/actions/workflows/cicd.yaml)
 
 # Goal
