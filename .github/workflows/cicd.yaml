@@ -73,8 +73,12 @@ jobs:
           username: ${{ secrets.VPS_SSH_USERNAME }}
           key: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
           rm: true
-          source: .env, docker-compose.yaml
+          source: ".env,docker-compose.yaml"
           target: ./deploy
+
+      - name: debug
+        run: |
+          ls -al
 
       - name: DEPLOY
         uses: appleboy/ssh-action@master
