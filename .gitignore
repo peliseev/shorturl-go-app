@@ -4,3 +4,4 @@ img/.DS_Store
 vendor
 build
 config
+.env

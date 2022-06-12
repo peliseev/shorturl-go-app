@@ -8,7 +8,7 @@ services:
     networks:
       - app-network
     volumes:
-      - $(pwd)/.env:/etc/.env
+      - ${PWD}/.env:/etc/.env
 
   mongo:
     image: mongo:5.0.8
