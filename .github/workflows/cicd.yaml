@@ -81,8 +81,7 @@ jobs:
         with:
           host: ${{ secrets.VPS_SSH_HOST }}
           username: ${{ secrets.VPS_SSH_USERNAME }}
-          password: ${{ secrets.PASSWORD }}
-          port: ${{ secrets.PORT }}
+          key: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
           script: |
             cd ./deploy
             docker-compose pull && docker-compose up -d
