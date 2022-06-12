@@ -25,10 +25,10 @@ func main() {
 	cfg := envConfig()
 	db := mongo.Open(cfg.mongoUrl)
 	service := mongo.NewShortURLService(db)
-	bot := telegram.NewBot(cfg.urlPrefix, cfg.tgAPIkey, db, service)
-	server := server.NewServer(db, service)
+	bot := telegram.NewBot(cfg.urlPrefix, cfg.tgAPIkey, service)
+	srv := server.NewServer(db, service)
 	go bot.Run()
-	log.Fatal(server.Run(cfg.port))
+	log.Fatal(srv.Run(cfg.port))
 }
 
 func envConfig() config {

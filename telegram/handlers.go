@@ -14,40 +14,41 @@ import (
 	"github.com/peliseev/shorturl-go-app/domain"
 )
 
-func (b *Bot) handleGreeting(update *tgbot.Update) {
-	const greetingFormat = `Привет %s! 
+const (
+	GreetingFormat = `Привет %s! 
 
-	Этот бот умеет работать только с ссылками. 
-	Прежде чем прислать ссылку, убедитесь в том, что:
-	  - домен указан верно; 
-	  - сайт онлайн;
-	  - перед ссылкой нет лишних символов.`
+Этот бот умеет работать только с ссылками. 
+Прежде чем прислать ссылку, убедитесь в том, что:
+	- домен указан верно; 
+	- сайт онлайн;
+	- перед ссылкой нет лишних символов.`
 
-	response(fmt.Sprintf(greetingFormat, update.Message.From.UserName), b, update)
+	ErrorMsg = `Этот бот умеет работать только с ссылками.
+Прежде чем прислать ссылку, убедитесь в том, что:
+ - домен указан верно; 
+ - сайт онлайн;
+ - перед ссылкой нет лишних символов.`
+)
+
+func (b *Bot) HandleGreeting(update *tgbot.Update) {
+	response(fmt.Sprintf(GreetingFormat, update.Message.From.UserName), b, update)
 }
 
-func (b *Bot) handleURL(update *tgbot.Update) {
-	const errorMsg = `
-	Этот бот умеет работать только с ссылками. 
-	Прежде чем прислать ссылку, убедитесь в том, что:
-	  - домен указан верно; 
-	  - сайт онлайн;
-	  - перед ссылкой нет лишних символов.`
-
+func (b *Bot) HandleURL(update *tgbot.Update) {
 	pURL := update.Message.Text
 	ok := validateURL(pURL)
 
 	if !ok {
-		response(errorMsg, b, update)
+		response(ErrorMsg, b, update)
 		return
 	}
 
 	user := update.Message.From.UserName
 
-	ctx, cancle := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancle()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 
-	shortURL, err := b.urlService.CreateShortURL(ctx, &domain.ShortURL{
+	shortURL, err := b.UrlService.CreateShortURL(ctx, &domain.ShortURL{
 		User:      user,
 		OriginURL: pURL,
 		ShortURL:  computeShortURL(pURL, user),
@@ -57,18 +58,18 @@ func (b *Bot) handleURL(update *tgbot.Update) {
 		log.Print(err)
 	}
 
-	response(b.urlPrefix+shortURL, b, update)
+	response(b.UrlPrefix+shortURL, b, update)
 }
 
 func validateURL(pURL string) bool {
-	url, err := url.Parse(pURL)
+	parsedURL, err := url.Parse(pURL)
 	if err != nil {
 		log.Print(err)
 		return false
 	}
-	_, err = net.DialTimeout("tcp", url.Host+":http", time.Duration(5)*time.Second)
+	_, err = net.DialTimeout("tcp", parsedURL.Host+":http", time.Duration(5)*time.Second)
 	if err != nil {
-		_, err := net.DialTimeout("tcp", url.Host+":https", time.Duration(5)*time.Second)
+		_, err := net.DialTimeout("tcp", parsedURL.Host+":https", time.Duration(5)*time.Second)
 		if err != nil {
 			log.Printf("Site %s is unreachable", pURL)
 			return false
@@ -79,7 +80,7 @@ func validateURL(pURL string) bool {
 
 func response(text string, b *Bot, update *tgbot.Update) {
 	msg := tgbot.NewMessage(update.Message.Chat.ID, text)
-	_, err := b.bot.Send(msg)
+	_, err := b.Bot.Send(msg)
 	if err != nil {
 		log.Print("Can't send message: ", err)
 	}
