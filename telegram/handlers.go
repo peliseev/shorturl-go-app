@@ -121,6 +121,7 @@ func responseWithCountButton(shortURL string, b *Bot, update *tgbot.Update) {
 
 func response(text string, chatId int64, b *Bot) (tgbot.Message, error) {
 	msg := tgbot.NewMessage(chatId, text)
+	msg.DisableWebPagePreview = true
 	sMsg, err := b.Bot.Send(msg)
 	if err != nil {
 		log.Print("Can't send message: ", err)

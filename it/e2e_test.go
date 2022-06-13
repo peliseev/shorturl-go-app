@@ -119,7 +119,7 @@ func TestWithMongoDB(t *testing.T) {
 	}
 
 	t.Run("2 users with 1 link", func(t *testing.T) { twoUsersWithSameLink(t, bot, "https://go.dev/doc/effective_go") })
-	t.Run("Test counter", func(t *testing.T) { testCounter(t, bot, "https://hh.ru/") })
+	t.Run("test counter", func(t *testing.T) { testCounter(t, bot, "https://hh.ru/") })
 }
 
 func greetingTest(t *testing.T, bot telegram.Bot) {
