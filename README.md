@@ -1,5 +1,5 @@
 # SHORTURL-GO-APP
-Simple telegram-bot and server implement url shorter function.
+Simple telegram-bot and server implement url shorter and follow counter functions.
 
 Bot available here - [t.me/MontyShorty_bot](https://t.me/MontyShorty_bot)
 
@@ -9,9 +9,6 @@ Bot available here - [t.me/MontyShorty_bot](https://t.me/MontyShorty_bot)
 The project was created for 2 purpose:
 * Learn Golang with "Real World Application" example
 * Add this one to CV
-
-## TODO
-* Add link follow counter
 
 # Environment variables
 | Variable               | Description                                                                                                                                                   | Example                                   | Default value                                            |

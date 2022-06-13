@@ -4,9 +4,13 @@ import (
 	"context"
 	"fmt"
 	tgbot "github.com/go-telegram-bot-api/telegram-bot-api"
+	"math/rand"
 	"net/http"
 	"net/url"
+	"strconv"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/peliseev/shorturl-go-app/mongo"
 	"github.com/peliseev/shorturl-go-app/server"
@@ -20,6 +24,22 @@ const (
 	TestUser2 = "test_user_2"
 )
 
+type testSuits struct {
+	testName  string
+	originUrl string
+	valid     bool
+}
+
+func testSuites() []testSuits {
+	return []testSuits{
+		{"valid url", "https://www.gojek.io/blog/golang-integration-testing-made-easy", true},
+		{"russian site", "https://ицб.дом.рф/originators/securitization/for-what/", true},
+		{"site without schema", "github.com", true},
+		{"ip", "140.82.121.4", true},
+		{"invalid url", "invalid url", false},
+	}
+}
+
 type config struct {
 	port, mongoUrl, urlPrefix string
 }
@@ -29,14 +49,21 @@ type BotAPIMock struct {
 }
 
 func (b *BotAPIMock) Send(c tgbot.Chattable) (tgbot.Message, error) {
-	mc := c.(tgbot.MessageConfig)
-	fmt.Println(mc.Text)
-	b.SentMsg = mc.Text
+	switch c.(type) {
+	case tgbot.MessageConfig:
+		mc := c.(tgbot.MessageConfig)
+		fmt.Println(mc.Text)
+		b.SentMsg = mc.Text
+	}
 	return tgbot.Message{}, nil
 }
 
 func (b *BotAPIMock) GetUpdatesChan(tgbot.UpdateConfig) (tgbot.UpdatesChannel, error) {
 	return nil, nil
+}
+
+func (b *BotAPIMock) AnswerCallbackQuery(tgbot.CallbackConfig) (tgbot.APIResponse, error) {
+	return tgbot.APIResponse{}, nil
 }
 
 func TestWithMongoDB(t *testing.T) {
@@ -84,66 +111,77 @@ func TestWithMongoDB(t *testing.T) {
 		}
 	}()
 
+	// Tests
 	t.Run("greeting", func(t *testing.T) { greetingTest(t, bot) })
-	t.Run("valid url", func(t *testing.T) { validUrl(t, bot) })
-	t.Run("invalid url", func(t *testing.T) { invalidUrl(t, bot) })
-	t.Run("2 users with 1 link", func(t *testing.T) { twoUsersWithSameLink(t, bot) })
-	t.Run("russian site", func(t *testing.T) { russianSite(t, bot) })
+
+	for _, ts := range testSuites() {
+		t.Run(ts.testName, func(t *testing.T) { doTest(t, bot, ts.originUrl, ts.valid) })
+	}
+
+	t.Run("2 users with 1 link", func(t *testing.T) { twoUsersWithSameLink(t, bot, "https://go.dev/doc/effective_go") })
+	t.Run("Test counter", func(t *testing.T) { testCounter(t, bot, "https://hh.ru/") })
 }
 
 func greetingTest(t *testing.T, bot telegram.Bot) {
-	bot.HandleGreeting(prepareMsg("/start", TestUser))
+	bot.HandleGreeting(prepareMessageUpdate("/start", TestUser))
 	b := bot.Bot.(*BotAPIMock)
 	if b.SentMsg != fmt.Sprintf(telegram.GreetingFormat, TestUser) {
 		t.Errorf("Sent message: %q", b.SentMsg)
 	}
 }
 
-func validUrl(t *testing.T, bot telegram.Bot) {
-	originURL := "https://www.gojek.io/blog/golang-integration-testing-made-easy"
-	bot.HandleURL(prepareMsg(originURL, TestUser))
-
+func doTest(t *testing.T, bot telegram.Bot, originURL string, valid bool) {
 	b := bot.Bot.(*BotAPIMock)
-	if b.SentMsg != "http://localhost:8080/IEGRD" {
-		t.Errorf("\nSentMsg = %s\nExpected = http://localhost:8080/IEGRD\n", b.SentMsg)
-	}
-
-	getShortLink(t, b.SentMsg, originURL)
-}
-
-func invalidUrl(t *testing.T, bot telegram.Bot) {
-	bot.HandleURL(prepareMsg("https://www.pasddsadsadsadsa.io/blog/golang-integration-testing-made-easy",
-		TestUser))
-
-	b := bot.Bot.(*BotAPIMock)
-	if b.SentMsg != telegram.ErrorMsg {
-		t.Errorf("Sent message: %q", b.SentMsg)
+	bot.HandleURL(prepareMessageUpdate(originURL, TestUser))
+	if valid {
+		getAndCheckShortLink(t, b.SentMsg, originURL)
+	} else {
+		if b.SentMsg != telegram.ErrorMsg {
+			t.Errorf("Sent message: %q", b.SentMsg)
+		}
 	}
 }
 
-func twoUsersWithSameLink(t *testing.T, bot telegram.Bot) {
+func twoUsersWithSameLink(t *testing.T, bot telegram.Bot, originURL string) {
 	b := bot.Bot.(*BotAPIMock)
 
-	bot.HandleURL(prepareMsg("https://diablo4.blizzard.com/en-us/", TestUser))
+	bot.HandleURL(prepareMessageUpdate(originURL, TestUser))
 	msgToUser1 := b.SentMsg
+	getAndCheckShortLink(t, msgToUser1, originURL)
 
-	bot.HandleURL(prepareMsg("https://diablo4.blizzard.com/en-us/", TestUser2))
+	bot.HandleURL(prepareMessageUpdate(originURL, TestUser2))
 	msgToUser2 := b.SentMsg
+	getAndCheckShortLink(t, msgToUser1, originURL)
 
 	if msgToUser1 == msgToUser2 {
 		t.Errorf("User-1 short link: %q, User-2 short link: %q", msgToUser1, msgToUser2)
 	}
 }
 
-func russianSite(t *testing.T, bot telegram.Bot) {
-	originURL := "https://ицб.дом.рф/originators/securitization/for-what/"
+func testCounter(t *testing.T, bot telegram.Bot, originURL string) {
 	b := bot.Bot.(*BotAPIMock)
-	bot.HandleURL(prepareMsg(originURL, TestUser))
 
-	getShortLink(t, b.SentMsg, originURL)
+	bot.HandleURL(prepareMessageUpdate(originURL, TestUser))
+	shortURL := b.SentMsg
+
+	var expect string
+	for i := 1; i <= 20; i++ {
+
+		fmt.Printf("[%d] getAndCheckShortLink(*testing.T, %q, %q)\n", i, shortURL, originURL)
+		getAndCheckShortLink(t, shortURL, originURL)
+		bot.HandleCountButtonCallback(prepareButtonClickUpdate(shortURL[len(shortURL)-5:]))
+		if i < 2 || i > 4 {
+			expect = fmt.Sprintf(telegram.CountMsgf, shortURL, i, "")
+		} else {
+			expect = fmt.Sprintf(telegram.CountMsgf, shortURL, i, "а")
+		}
+		if b.SentMsg != expect {
+			t.Errorf("Follow link %d times. Expect: %s, Got: %s\n", i, expect, b.SentMsg)
+		}
+	}
 }
 
-func prepareMsg(text, user string) *tgbot.Update {
+func prepareMessageUpdate(text, user string) *tgbot.Update {
 	return &tgbot.Update{
 		Message: &tgbot.Message{
 			Text: text,
@@ -157,7 +195,21 @@ func prepareMsg(text, user string) *tgbot.Update {
 	}
 }
 
-func getShortLink(t *testing.T, shortURL, originURL string) {
+func prepareButtonClickUpdate(shortURL string) *tgbot.Update {
+	return &tgbot.Update{
+		CallbackQuery: &tgbot.CallbackQuery{
+			ID:   "5051",
+			Data: shortURL,
+			Message: &tgbot.Message{
+				Chat: &tgbot.Chat{
+					ID: 1337,
+				},
+			},
+		},
+	}
+}
+
+func getAndCheckShortLink(t *testing.T, shortURL, originURL string) {
 	client := &http.Client{
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
@@ -165,26 +217,27 @@ func getShortLink(t *testing.T, shortURL, originURL string) {
 	}
 	resp, err := client.Get(shortURL)
 	if err != nil {
-		t.Errorf("error while sending request to %s", shortURL)
+		t.Errorf("error while sending request to %s\n", shortURL)
 	}
 	if resp.StatusCode != 302 {
 		t.Errorf("HTTP Status is '%d', Expected '%d'", resp.StatusCode, 302)
 	}
 	locationHeader := resp.Header.Get("Location")
 	decodedValue, err := url.QueryUnescape(locationHeader)
-	if decodedValue != originURL {
+	if !strings.HasSuffix(decodedValue, originURL) {
 		t.Errorf("Header[Location] = %q and doesnt match %q", locationHeader, originURL)
 	}
 }
 
 func envConfig(endpoint string) config {
 	mongoUrl := "mongodb://" + endpoint
-	urlPrefix := "http://localhost:8080/"
-	port := ":8080"
+	rand.Seed(time.Now().UnixNano())
+	port := rand.Intn(40000-1001+1) + 1001
+	urlPrefix := "http://localhost:" + strconv.Itoa(port) + "/"
 
 	return config{
 		mongoUrl:  mongoUrl,
 		urlPrefix: urlPrefix,
-		port:      port,
+		port:      ":" + strconv.Itoa(port),
 	}
 }
