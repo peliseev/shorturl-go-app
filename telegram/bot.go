@@ -17,6 +17,7 @@ type Bot struct {
 type IBotAPI interface {
 	Send(c tgbot.Chattable) (tgbot.Message, error)
 	GetUpdatesChan(config tgbot.UpdateConfig) (tgbot.UpdatesChannel, error)
+	AnswerCallbackQuery(config tgbot.CallbackConfig) (tgbot.APIResponse, error)
 }
 
 func NewBot(urlPrefix, apiKey string, sus *mongo.ShortURLService) *Bot {
@@ -53,6 +54,10 @@ func (b *Bot) Run() {
 			default:
 				b.HandleURL(&update)
 			}
+		}
+		if update.CallbackQuery != nil {
+			log.Printf("User %q press count button", update.CallbackQuery.From.UserName)
+			b.HandleCountButtonCallback(&update)
 		}
 	}
 }

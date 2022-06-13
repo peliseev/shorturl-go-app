@@ -39,6 +39,22 @@ func (sus *ShortURLService) CreateShortURL(ctx context.Context, shortURL *domain
 
 func (sus *ShortURLService) GetOriginURL(ctx context.Context, shortURL string) (*domain.ShortURL, error) {
 	var su domain.ShortURL
-	err := sus.collection.FindOne(ctx, bson.D{{Key: "short_url", Value: shortURL}}).Decode(&su)
+	filter := bson.M{
+		"short_url": shortURL,
+	}
+	update := bson.M{
+		"$inc": bson.M{"count": 1},
+		"$set": bson.M{"updated_at": time.Now()},
+	}
+	err := sus.collection.FindOneAndUpdate(ctx, filter, update).Decode(&su)
+	return &su, err
+}
+
+func (sus *ShortURLService) GetURLFollowCount(ctx context.Context, shortURL string) (*domain.ShortURL, error) {
+	var su domain.ShortURL
+	filter := bson.M{
+		"short_url": shortURL,
+	}
+	err := sus.collection.FindOne(ctx, filter).Decode(&su)
 	return &su, err
 }
